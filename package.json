@@ -1,0 +1,24 @@
+{
+  "name": "react-native-dnd-list",
+  "version": "1.0.1",
+  "description": "A react-native component that allows user to drag and drop items in a list",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hysasuke/ProgressBar.git"
+  },
+  "keywords": [
+    "drag-and-drop",
+    "dnd",
+    "sortable"
+  ],
+  "author": "Wenhao Li",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hysasuke/ProgressBar/issues"
+  },
+  "homepage": "https://github.com/hysasuke/ProgressBar#readme"
+}
