@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hysasuke/ProgressBar.git"
+    "url": "git+https://github.com/hysasuke/DraggableList.git"
   },
   "keywords": [
     "drag-and-drop",
@@ -18,7 +18,10 @@
   "author": "Wenhao Li",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hysasuke/ProgressBar/issues"
+    "url": "https://github.com/hysasuke/DraggableList/issues"
   },
-  "homepage": "https://github.com/hysasuke/ProgressBar#readme"
+  "homepage": "https://github.com/hysasuke/DraggableList#readme",
+  "dependencies": {
+    "react-native-reanimated": "^2.8.0"
+  }
 }
