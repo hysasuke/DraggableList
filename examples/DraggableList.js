@@ -31,8 +31,8 @@ export default function DraggableList(props) {
   });
 
   const allChildrenPositions = useSharedValue({});
-
   let scrollViewContainerHeight = 0;
+  let allChildrenList = [];
   for (let item of props.data) {
     let order = 0;
     let childrenPositions = {};
@@ -41,11 +41,11 @@ export default function DraggableList(props) {
     for (let child of item.children) {
       scrollViewContainerHeight += props.itemHeight;
       childrenPositions[child.id] = order;
+      allChildrenList.push({containerID: item.id, child: child});
       order++;
     }
     allChildrenPositions.value[item.id] = childrenPositions;
   }
-
   return (
     <ScrollView
       onScroll={onScroll}
@@ -114,6 +114,30 @@ export default function DraggableList(props) {
           );
         })}
       </View>
+      {/* {allChildrenList.map(item => {
+        let child = item.child;
+        return (
+          <Item
+            key={child.id}
+            id={child.id}
+            data={props.data}
+            onReorder={data => {
+              props.onReorder(data);
+            }}
+            positions={allChildrenPositions}
+            scrollY={scrollY}
+            containerWidth={containerWidth}
+            itemHeight={props.itemHeight}
+            titleHeight={props.titleHeight}
+            numOfColumns={numOfColumns}
+            itemsContainerOffset={itemsContainerOffset}
+            child={true}
+            containerID={item.containerID}
+            scrollViewRef={scrollViewRef}>
+            {props.renderItem ? props.renderItem(child) : null}
+          </Item>
+        );
+      })} */}
     </ScrollView>
   );
 }

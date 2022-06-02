@@ -29,7 +29,6 @@ export const getPosition = (
     }
   }
   let y = Math.floor(position / numOfColumns) * itemHeight;
-
   // console.log(y + offsetY);
   return {
     x: position % numOfColumns === 0 ? 0 : containerWidth,
@@ -54,16 +53,20 @@ export const getOrder = (
       key => containerStartYMapping[key] === containerID,
     ),
   );
+  let containerStartY = startY;
   for (let key of Object.keys(containerStartYMapping)) {
     let index = Object.keys(containerStartYMapping).indexOf(key);
     if (startY + ty > parseFloat(key)) {
       targetContainerID = containerStartYMapping[key];
+      containerStartY = parseInt(key);
     }
   }
+
   const x = Math.round(tx / containerWidth) * containerWidth;
   const y = Math.round(ty / itemHeight) * itemHeight;
   const row = Math.max(y, 0) / itemHeight;
   const col = Math.max(x, 0) / containerWidth;
+
   return {
     containerID: targetContainerID,
     order: Math.min(row * numOfColumns + col),

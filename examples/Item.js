@@ -76,9 +76,12 @@ export default function Item(props) {
 
   useAnimatedReaction(
     () => {
+      // console.log(props.containerID);
+      // console.log(props.positions.value[props.containerID]);
       return props.positions.value[props.containerID][props.id];
     },
     newOrder => {
+      containerStartYMapping.value = handleContainerStartYMapping();
       const newPosition = getPosition(
         newOrder,
         props.containerWidth,
@@ -120,13 +123,10 @@ export default function Item(props) {
           containerStartYMapping.value,
           props.containerID,
         );
-        console.log(newOrder);
         if (
           oldOrder !== newOrder.order ||
           props.containerID !== newOrder.containerID
         ) {
-          const oldOrder = props.positions.value[props.containerID][props.id];
-
           const idToSwap =
             props.positions.value[newOrder.containerID] &&
             Object.keys(props.positions.value[newOrder.containerID]).find(
@@ -143,9 +143,10 @@ export default function Item(props) {
           ).indexOf(newOrder.containerID);
           // const itemToSwap =
           //   props.positions.value[newOrder.containerID][idToSwap];
-          const newPositions = {
+          let newPositions = {
             ...props.positions.value,
           };
+
           if (props.containerID === newOrder.containerID && idToSwap) {
             newPositions[props.containerID][props.id] = newOrder.order;
             newPositions[newOrder.containerID][idToSwap] = oldOrder;
@@ -159,13 +160,13 @@ export default function Item(props) {
             } else if (props.container) {
               let tmp = [...dataCopy];
               let oldItemCopy = dataCopy[oldOrder];
-              // console.log(oldOrder, newOrder.order);
               dataCopy.splice(oldOrder, 1);
               dataCopy.splice(newOrder.order, 0, oldItemCopy);
             }
           } else {
             //TODO: handling drag and drop between containers
             // newPositions[newOrder.containerID][props.id] = newOrder.order;
+            // console.log(newPositions);
             // let fromContainer = dataCopy[oldItemContainerIndex];
             // let fromItemCopy = fromContainer.children.splice(oldOrder, 1)[0];
             // // console.log(fromContainer);
@@ -176,7 +177,7 @@ export default function Item(props) {
             // newPositions[newOrder.containerID][props.id] = oldOrder;
             // delete newPositions[props.containerID][props.id];
           }
-          props.positions.value = newPositions;
+          props.positions.value = {...newPositions};
         }
 
         // handling scrolling the ScrollView
@@ -195,7 +196,7 @@ export default function Item(props) {
           ctx.y -= diff;
           translateY.value = ctx.y + translationY;
         }
-        // console.log(translateY.value, upperBound);
+        // console.log(actualTranslationY, upperBound, lowerBound);
         if (translateY.value > upperBound) {
           const diff = Math.min(
             translateY.value - upperBound,
