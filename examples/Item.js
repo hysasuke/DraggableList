@@ -185,8 +185,14 @@ export default function Item(props) {
         const upperBound = lowerBound + containerHeight - props.itemHeight;
         const maxScroll = contentHeight.value - containerHeight;
         const leftToScrollDown = maxScroll - scrollY.value;
-        if (translateY.value < lowerBound) {
-          const diff = Math.min(lowerBound - translateY.value, lowerBound);
+        const currentContainerStartY = parseInt(
+          Object.keys(containerStartYMapping.value).find(key => {
+            return containerStartYMapping.value[key] === props.containerID;
+          }),
+        );
+        let actualTranslateY = translateY.value + currentContainerStartY;
+        if (actualTranslateY < lowerBound) {
+          const diff = Math.min(lowerBound - actualTranslateY, lowerBound);
           scrollY.value -= diff;
 
           scrollViewRef?.current.scrollTo({
@@ -196,12 +202,12 @@ export default function Item(props) {
           ctx.y -= diff;
           translateY.value = ctx.y + translationY;
         }
-        // console.log(actualTranslationY, upperBound, lowerBound);
-        if (translateY.value > upperBound) {
+        if (actualTranslateY > upperBound) {
           const diff = Math.min(
-            translateY.value - upperBound,
-            leftToScrollDown,
+            actualTranslateY - upperBound,
+            actualTranslateY - upperBound,
           );
+          // console.log(actualTranslateY, upperBound, leftToScrollDown);
           scrollY.value += diff;
           scrollViewRef?.current.scrollTo({
             y: scrollY.value,
