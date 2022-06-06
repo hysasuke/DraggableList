@@ -254,13 +254,13 @@ export default function Item(props) {
           props.id,
           props.container ? 'container' : 'child',
         );
-        const lowerBound = scrollY.value + 50;
-        const upperBound = lowerBound + containerHeight - props.itemHeight / 2;
+        const lowerBound = scrollY.value;
+        const upperBound = lowerBound + containerHeight - props.itemHeight;
         const maxScroll = contentHeight - containerHeight;
         const leftToScrollDown = maxScroll - scrollY.value;
         let actualTranslateY = props.container
           ? translateY.value
-          : translateY.value + containerStartY;
+          : translateY.value + containerStartY + props.titleHeight;
         if (actualTranslateY < lowerBound) {
           const diff = Math.min(lowerBound - actualTranslateY, lowerBound);
           scrollY.value -= diff;
@@ -359,7 +359,7 @@ export default function Item(props) {
   });
 
   const style = useAnimatedStyle(() => {
-    const zIndex = isGestureActive.value ? 100 : 0;
+    const zIndex = isGestureActive.value ? 99999 : 0;
     const scale = !props.container && isGestureActive.value ? 1.1 : 1;
     return {
       position: 'absolute',
