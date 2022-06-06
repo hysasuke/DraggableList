@@ -232,7 +232,8 @@ export default function Item(props) {
               // dataCopy.splice(newOrder.order, 0, oldItemCopy);
             }
           } else {
-            //TODO: handling drag and drop between containers
+            console.log(newOrder);
+            //  handling drag and drop between containers
             // newPositions[newOrder.containerID][props.id] = newOrder.order;
             // console.log(newPositions);
             // let fromContainer = dataCopy[oldItemContainerIndex];

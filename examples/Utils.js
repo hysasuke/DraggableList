@@ -67,12 +67,14 @@ export const getOrder = (
         positionsWithOrder.value[key].order <
         positionsWithOrder.value[currentContainer].order
       ) {
-        offsetY = positionsWithOrder.value[currentContainer].offsetY;
+        offsetY =
+          positionsWithOrder.value[currentContainer].offsetY -
+          positionsWithOrder.value[key].offsetY;
       } else if (
         positionsWithOrder.value[key].order >
         positionsWithOrder.value[currentContainer].order
       ) {
-        offsetY = -positionsWithOrder.value[key].offsetY;
+        offsetY = containerStartY - positionsWithOrder.value[key].offsetY;
       } else {
         offsetY = 0;
       }
