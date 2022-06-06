@@ -55,7 +55,8 @@ export default function Item(props) {
     props.containerWidth,
     props.itemHeight,
     props.numOfColumns,
-    containerStartY,
+    positionsWithOrder,
+    props.container ? 'container' : 'child',
   );
 
   if (props.container) {
@@ -103,7 +104,8 @@ export default function Item(props) {
         props.containerWidth,
         props.itemHeight,
         props.numOfColumns,
-        containerStartY,
+        positionsWithOrder,
+        props.container ? 'container' : 'child',
       );
 
       translateX.value = withTiming(newPosition.x, animationConfig);
@@ -261,6 +263,7 @@ export default function Item(props) {
         let actualTranslateY = props.container
           ? translateY.value
           : translateY.value + containerStartY + props.titleHeight;
+
         if (actualTranslateY < lowerBound) {
           const diff = Math.min(lowerBound - actualTranslateY, lowerBound);
           scrollY.value -= diff;
@@ -318,7 +321,8 @@ export default function Item(props) {
         props.containerWidth,
         props.itemHeight,
         props.numOfColumns,
-        containerStartY,
+        positionsWithOrder,
+        props.container ? 'container' : 'child',
       );
 
       translateX.value = withTiming(destination.x, animationConfig, () => {

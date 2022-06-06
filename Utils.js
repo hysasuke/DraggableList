@@ -16,15 +16,26 @@ export const getPosition = (
   containerWidth,
   itemHeight,
   numOfColumns,
-  containerStartY,
+  positionsWithOrder,
+  type,
 ) => {
   'worklet';
-  let offsetY = containerStartY.value;
-  let y = Math.floor(position / numOfColumns) * itemHeight;
+  let prevContainersHeight = 0;
+  for (let key of Object.keys(positionsWithOrder.value)) {
+    let item = positionsWithOrder.value[key];
+    if (type === 'container') {
+      if (item.order < position) {
+        prevContainersHeight += item.containerHeight;
+      }
+    }
+  }
+  let y =
+    type === 'container'
+      ? prevContainersHeight
+      : Math.floor(position / numOfColumns) * itemHeight;
   return {
     x: position % numOfColumns === 0 ? 0 : containerWidth,
     y: y,
-    yInPage: y + offsetY,
   };
 };
 
