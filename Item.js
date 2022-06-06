@@ -143,6 +143,10 @@ export default function Item(props) {
         props.id,
         props.container ? 'container' : 'child',
       );
+      props.currentDragging.value =
+        props.container && props.currentDragging.value === ''
+          ? 'container'
+          : 'child';
       longPressTimer.value = setTimeout(() => {
         isGestureActive.value = true;
         shouldMoveItem.value = true;
@@ -354,17 +358,21 @@ export default function Item(props) {
       }
 
       shouldMoveItem.value = false;
+      props.currentDragging.value = '';
     },
     onFail: () => {
       clearTimeout(longPressTimer.value);
       longPressTimer.value = null;
       isGestureActive.value = false;
+      props.currentDragging.value = '';
     },
   });
 
   const style = useAnimatedStyle(() => {
+    const type = props.container ? 'container' : 'child';
     const zIndex = isGestureActive.value ? 99999 : 0;
-    const scale = !props.container && isGestureActive.value ? 1.1 : 1;
+    const scale =
+      props.currentDragging.value === type && isGestureActive.value ? 1.1 : 1;
     return {
       position: 'absolute',
       top: 0,

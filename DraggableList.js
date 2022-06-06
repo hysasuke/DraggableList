@@ -15,6 +15,7 @@ export default function DraggableList(props) {
   const scrollViewRef = React.useRef();
   const scrollY = useSharedValue(0);
   const containerStartY = useSharedValue(0);
+  const currentDragging = useSharedValue('');
   const onScroll = event => {
     scrollY.value = event.nativeEvent.contentOffset.y;
   };
@@ -87,6 +88,7 @@ export default function DraggableList(props) {
               data={sharedData}
               positionsWithOrder={positionsWithOrder}
               scrollY={scrollY}
+              currentDragging={currentDragging}
               containerStartY={containerStartY}
               containerWidth={containerWidth}
               contentHeight={scrollViewContainerHeight}
@@ -106,32 +108,37 @@ export default function DraggableList(props) {
                 {props.renderTitle ? props.renderTitle(item) : null}
               </View>
               <View style={{justifyContent: 'center'}}>
-                {item.children.map((child, childIndex) => {
-                  return (
-                    <Item
-                      key={child.id}
-                      id={child.id}
-                      parentIndex={index}
-                      index={childIndex}
-                      data={sharedData}
-                      contentHeight={scrollViewContainerHeight}
-                      containerStartY={containerStartY}
-                      onReorder={data => {
-                        props.onReorder(data);
-                      }}
-                      positionsWithOrder={positionsWithOrder}
-                      scrollY={scrollY}
-                      containerWidth={containerWidth}
-                      itemHeight={props.itemHeight}
-                      titleHeight={props.titleHeight}
-                      numOfColumns={numOfColumns}
-                      child={true}
-                      containerID={item.id}
-                      scrollViewRef={scrollViewRef}>
-                      {props.renderItem ? props.renderItem(child) : null}
-                    </Item>
-                  );
-                })}
+                {item.children.length === 0
+                  ? props.renderEmptyItem
+                    ? props.renderEmptyItem()
+                    : null
+                  : item.children.map((child, childIndex) => {
+                      return (
+                        <Item
+                          key={child.id}
+                          id={child.id}
+                          parentIndex={index}
+                          index={childIndex}
+                          currentDragging={currentDragging}
+                          data={sharedData}
+                          contentHeight={scrollViewContainerHeight}
+                          containerStartY={containerStartY}
+                          onReorder={data => {
+                            props.onReorder(data);
+                          }}
+                          positionsWithOrder={positionsWithOrder}
+                          scrollY={scrollY}
+                          containerWidth={containerWidth}
+                          itemHeight={props.itemHeight}
+                          titleHeight={props.titleHeight}
+                          numOfColumns={numOfColumns}
+                          child={true}
+                          containerID={item.id}
+                          scrollViewRef={scrollViewRef}>
+                          {props.renderItem ? props.renderItem(child) : null}
+                        </Item>
+                      );
+                    })}
               </View>
             </Item>
           );

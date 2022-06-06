@@ -9,19 +9,22 @@ function App() {
     let data = [];
     for (let i = 0; i < 5; i++) {
       let children = [];
-      for (let j = 0; j < 5; j++) {
-        children.push({
-          id: `item-${j}-in-list-${i}`,
-          title: `Item-${j}-in-list-${i}`,
-          backgroundColor: `rgb(${Math.floor(
-            Math.random() * 255,
-          )}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
-            Math.random() * 255,
-          )})`,
-          onPress: () => {
-            alert(`Item-${j}-in-list-${i}`);
-          },
-        });
+      let randomIndex = Math.ceil(Math.random() * 5);
+      if (i !== 2) {
+        for (let j = 0; j < randomIndex; j++) {
+          children.push({
+            id: `item-${j}-in-list-${i}`,
+            title: `Item-${j}-in-list-${i}`,
+            backgroundColor: `rgb(${Math.floor(
+              Math.random() * 255,
+            )}, ${Math.floor(Math.random() * 255)}, ${Math.floor(
+              Math.random() * 255,
+            )})`,
+            onPress: () => {
+              alert(`Item-${j}-in-list-${i}`);
+            },
+          });
+        }
       }
       data.push({
         id: 'container' + i,
@@ -38,6 +41,9 @@ function App() {
         <DraggableList
           itemHeight={60}
           titleHeight={50}
+          renderEmptyItem={() => {
+            return <Text>empty</Text>;
+          }}
           containerWidth={window.width - 20}
           data={data}
           onReorder={data => {
