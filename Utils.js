@@ -1,14 +1,14 @@
-import {Dimensions} from 'react-native';
-import {Easing} from 'react-native-reanimated';
+import { Dimensions } from "react-native";
+import { Easing } from "react-native-reanimated";
 
-const {width} = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 export const MARGIN = 8;
 export const COL = 1;
 export const SIZE = width / COL - MARGIN;
 export const HEIGHT = 50;
 export const animationConfig = {
   easing: Easing.inOut(Easing.ease),
-  duration: 350,
+  duration: 350
 };
 
 export const getPosition = (
@@ -17,25 +17,25 @@ export const getPosition = (
   itemHeight,
   numOfColumns,
   positionsWithOrder,
-  type,
+  type
 ) => {
-  'worklet';
+  "worklet";
   let prevContainersHeight = 0;
   for (let key of Object.keys(positionsWithOrder.value)) {
     let item = positionsWithOrder.value[key];
-    if (type === 'container') {
+    if (type === "container") {
       if (item.order < position) {
         prevContainersHeight += item.containerHeight;
       }
     }
   }
   let y =
-    type === 'container'
+    type === "container"
       ? prevContainersHeight
       : Math.floor(position / numOfColumns) * itemHeight;
   return {
     x: position % numOfColumns === 0 ? 0 : containerWidth,
-    y: y,
+    y: y
   };
 };
 
@@ -47,22 +47,22 @@ export const getOrder = (
   numOfColumns,
   positionsWithOrder,
   id,
-  type,
+  type
 ) => {
-  'worklet';
-  let targetContainerID = '';
+  "worklet";
+  let targetContainerID = "";
   let offsetY = 0;
   let maxOffsetY = Number.MIN_SAFE_INTEGER;
   let containerStartY = 0;
-  let currentContainer = '';
-  if (type === 'container') {
+  let currentContainer = "";
+  if (type === "container") {
     containerStartY = positionsWithOrder.value[id].offsetY;
     currentContainer = id;
   } else {
-    currentContainer = Object.keys(positionsWithOrder.value).find(key =>
+    currentContainer = Object.keys(positionsWithOrder.value).find((key) =>
       Object.keys(positionsWithOrder.value[key].children).find(
-        child => child === id,
-      ),
+        (child) => child === id
+      )
     );
     containerStartY = positionsWithOrder.value[currentContainer].offsetY;
   }
@@ -91,7 +91,7 @@ export const getOrder = (
       }
     }
   }
-  ty = type === 'child' ? ty + offsetY : ty;
+  ty = type === "child" ? ty + offsetY : ty;
   const x = Math.round(tx / containerWidth) * containerWidth;
   const y = Math.round(ty / itemHeight) * itemHeight;
   const row = Math.max(y, 0) / itemHeight;
@@ -99,6 +99,6 @@ export const getOrder = (
 
   return {
     containerID: targetContainerID,
-    order: Math.min(row * numOfColumns + col),
+    order: Math.min(row * numOfColumns + col)
   };
 };

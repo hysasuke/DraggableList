@@ -6,7 +6,8 @@ import {
   animationConfig,
   getOrder,
   COL,
-  HEIGHT
+  HEIGHT,
+  getCurrentContainer
 } from "./Utils";
 import Animated, {
   useSharedValue,
@@ -40,17 +41,16 @@ export default function Item(props) {
   let { scrollY, positionsWithOrder, scrollViewRef, data, contentHeight } =
     props;
   let fromIndex = useSharedValue();
-  const containerStartY = useSharedValue(
-    handleGetContainerStartY(
-      positionsWithOrder,
-      props.id,
-      props.container ? "container" : "child"
-    )
-  );
+  const currentContainerID = useSharedValue(props.containerID);
+  React.useEffect(() => {
+    currentContainerID.value = props.containerID;
+  }, [props.containerID]);
+
   const currentOrder = props.container
     ? props.positionsWithOrder.value[props.id].order
-    : props.positionsWithOrder.value[props.containerID].children[props.id]
-        .order;
+    : props.positionsWithOrder.value[currentContainerID.value].children[
+        props.id
+      ].order;
   let position = getPosition(
     currentOrder,
     props.containerWidth,
@@ -78,7 +78,7 @@ export default function Item(props) {
   //     ? (Object.keys(props.positionsWithOrder.value).length /
   //         props.numOfColumns) *
   //         props.itemHeight
-  //     : (Object.keys(props.positionsWithOrder.value[props.containerID].children)
+  //     : (Object.keys(props.positionsWithOrder.value[currentContainerID.value].children)
   //         .length /
   //         props.numOfColumns) *
   //         props.itemHeight,
@@ -89,13 +89,12 @@ export default function Item(props) {
   const longPressTimer = useSharedValue(null);
   useAnimatedReaction(
     () => {
-      // console.log(props.containerID);
+      // console.log(currentContainerID.value);
       if (props.container) {
         return props.positionsWithOrder.value[props.id].order;
       } else if (props.child) {
-        return props.positionsWithOrder.value[props.containerID].children[
-          props.id
-        ].order;
+        return props.positionsWithOrder.value[currentContainerID.value]
+          .children[props.id].order;
       }
     },
     (newOrder) => {
@@ -115,9 +114,9 @@ export default function Item(props) {
   );
   // useAnimatedReaction(
   //   () => {
-  //     // console.log(props.containerID);
-  //     // console.log(props.positions.value[props.containerID]);
-  //     return props.positions.value[props.containerID][props.id];
+  //     // console.log(currentContainerID.value);
+  //     // console.log(props.positions.value[currentContainerID.value]);
+  //     return props.positions.value[currentContainerID.value][props.id];
   //   },
   //   newOrder => {
   //     containerStartYMapping.value = handleContainerStartYMapping();
@@ -127,12 +126,12 @@ export default function Item(props) {
   //       props.itemHeight,
   //       props.numOfColumns,
   //       containerStartYMapping,
-  //       props.containerID,
+  //       currentContainerID.value,
   //     );
   //     translateX.value = withTiming(newPosition.x, animationConfig);
   //     translateY.value = withTiming(newPosition.y, animationConfig);
   //     contentHeight.value =
-  //       (Object.keys(props.positions.value[props.containerID]).length /
+  //       (Object.keys(props.positions.value[currentContainerID.value]).length /
   //         props.numOfColumns) *
   //       props.itemHeight;
   //   },
@@ -156,8 +155,9 @@ export default function Item(props) {
       ctx.y = translateY.value;
       ctx.fromIndex = props.container
         ? props.positionsWithOrder.value[props.id].order
-        : props.positionsWithOrder.value[props.containerID].children[props.id]
-            .order;
+        : props.positionsWithOrder.value[currentContainerID.value].children[
+            props.id
+          ].order;
     },
     onActive: ({ translationX, translationY }, ctx) => {
       if (shouldMoveItem.value) {
@@ -167,8 +167,9 @@ export default function Item(props) {
         // handle re-order items
         let oldOrder = props.container
           ? props.positionsWithOrder.value[props.id].order
-          : props.positionsWithOrder.value[props.containerID].children[props.id]
-              .order;
+          : props.positionsWithOrder.value[currentContainerID.value].children[
+              props.id
+            ].order;
         let newOrder = getOrder(
           translateX.value,
           translateY.value,
@@ -182,7 +183,7 @@ export default function Item(props) {
         ctx.newOrder = newOrder;
         if (
           oldOrder !== newOrder.order ||
-          props.containerID !== newOrder.containerID
+          currentContainerID.value !== newOrder.containerID
         ) {
           // const itemToSwap =
           //   props.positions.value[newOrder.containerID][idToSwap];
@@ -198,29 +199,30 @@ export default function Item(props) {
             swapIDs = { from: props.id, to: toID };
           } else if (props.child) {
             fromOrder =
-              props.positionsWithOrder.value[props.containerID].children[
+              props.positionsWithOrder.value[currentContainerID.value].children[
                 props.id
               ].order;
             let toID = Object.keys(
-              props.positionsWithOrder.value[props.containerID].children
+              props.positionsWithOrder.value[currentContainerID.value].children
             ).find(
               (key) =>
-                props.positionsWithOrder.value[props.containerID].children[key]
-                  .order === newOrder.order
+                props.positionsWithOrder.value[currentContainerID.value]
+                  .children[key].order === newOrder.order
             );
             swapIDs = { from: props.id, to: toID };
           }
 
           let positionsWithOrderCopy = { ...props.positionsWithOrder.value };
           if (
-            (props.containerID === newOrder.containerID || props.container) &&
+            (currentContainerID.value === newOrder.containerID ||
+              props.container) &&
             swapIDs.from &&
             swapIDs.to
           ) {
             // console.log(swapIDs);
             // handle swapping actual data
             if (props.child) {
-              positionsWithOrderCopy[props.containerID].children[
+              positionsWithOrderCopy[currentContainerID.value].children[
                 swapIDs.from
               ].order = newOrder.order;
               positionsWithOrderCopy[newOrder.containerID].children[
@@ -250,7 +252,7 @@ export default function Item(props) {
             //   fromItem = fromItemCopy;
             // }
             // newPositions[newOrder.containerID][props.id] = oldOrder;
-            // delete newPositions[props.containerID][props.id];
+            // delete newPositions[currentContainerID.value][props.id];
           }
           props.positionsWithOrder.value = { ...positionsWithOrderCopy };
         }
@@ -314,8 +316,9 @@ export default function Item(props) {
     onEnd: (_, ctx) => {
       let newOrder = props.container
         ? props.positionsWithOrder.value[props.id].order
-        : props.positionsWithOrder.value[props.containerID].children[props.id]
-            .order;
+        : props.positionsWithOrder.value[currentContainerID.value].children[
+            props.id
+          ].order;
       const containerStartY = handleGetContainerStartY(
         positionsWithOrder,
         props.id,
@@ -336,7 +339,7 @@ export default function Item(props) {
       translateY.value = withTiming(destination.y, animationConfig);
 
       if (props.onReorder && shouldMoveItem.value) {
-        let dataCopy = [...props.data.value];
+        let dataCopy = [...props.data];
         // handle reordering actual data
         if (props.child) {
           const parentContainer = dataCopy.find((item) =>
