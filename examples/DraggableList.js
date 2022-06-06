@@ -14,7 +14,7 @@ const window = Dimensions.get('window');
 export default function DraggableList(props) {
   const scrollViewRef = React.useRef();
   const scrollY = useSharedValue(0);
-  const itemsContainerOffset = useSharedValue(0);
+  const containerStartY = useSharedValue(0);
   const onScroll = event => {
     scrollY.value = event.nativeEvent.contentOffset.y;
   };
@@ -33,19 +33,33 @@ export default function DraggableList(props) {
   const allChildrenPositions = useSharedValue({});
   let scrollViewContainerHeight = 0;
   let allChildrenList = [];
-  for (let item of props.data) {
-    let order = 0;
-    let childrenPositions = {};
-    scrollViewContainerHeight += props.titleHeight;
-    // console.log(item);
-    for (let child of item.children) {
-      scrollViewContainerHeight += props.itemHeight;
-      childrenPositions[child.id] = order;
-      allChildrenList.push({containerID: item.id, child: child});
-      order++;
+
+  let handlePositionsWithOrder = () => {
+    let output = {};
+    for (let item of props.data) {
+      let index = props.data.indexOf(item);
+      let order = 0;
+      let childrenPositions = {};
+      output[item.id] = {order: index, children: {}};
+      scrollViewContainerHeight += props.titleHeight;
+
+      for (let child of item.children) {
+        let childIndex = item.children.indexOf(child);
+        scrollViewContainerHeight += props.itemHeight;
+        childrenPositions[child.id] = order;
+        allChildrenList.push({containerID: item.id, child: child});
+        output[item.id].children[child.id] = {
+          order: childIndex,
+        };
+        order++;
+      }
     }
-    allChildrenPositions.value[item.id] = childrenPositions;
-  }
+    return output;
+  };
+
+  let positionsWithOrder = useSharedValue(handlePositionsWithOrder());
+  // console.log([...props.data], positionsWithOrder.value);
+  let sharedData = useSharedValue(props.data);
   return (
     <ScrollView
       onScroll={onScroll}
@@ -53,32 +67,39 @@ export default function DraggableList(props) {
       contentContainerStyle={{
         // height: Math.ceil(props.data.length / numOfColumns) * itemHeight,
         height: scrollViewContainerHeight,
+        alignItems: 'center',
       }}
       showsVerticalScrollIndicator={false}
       bounces={false}
-      style={{paddingHorizontal: 20}}
       scrollEventThrottle={16}>
-      <View
-        onLayout={({nativeEvent}) => {
-          itemsContainerOffset.value = nativeEvent.layout.y;
-        }}>
-        {props.data?.map((item, index) => {
+      <View style={{alignItems: 'center', width: containerWidth}}>
+        {sharedData.value?.map((item, index) => {
           return (
             <Item
+              onLayout={({nativeEvent}) => {
+                containerStartY.value = nativeEvent.layout.y;
+                positionsWithOrder.value[item.id].offsetY =
+                  nativeEvent.layout.y;
+              }}
               key={item.id}
               id={item.id}
-              data={props.data}
+              index={index}
+              data={sharedData}
               positions={positions}
+              positionsWithOrder={positionsWithOrder}
               scrollY={scrollY}
+              containerStartY={containerStartY}
               containerWidth={containerWidth}
+              contentHeight={scrollViewContainerHeight}
               itemHeight={
                 item.children.length * props.itemHeight + props.titleHeight
               }
               titleHeight={props.titleHeight}
               numOfColumns={numOfColumns}
-              itemsContainerOffset={itemsContainerOffset}
               container={true}
-              onReorder={props.onReorder}
+              onReorder={data => {
+                props.onReorder(data);
+              }}
               containerID={'mainContainer'}
               scrollViewRef={scrollViewRef}>
               <View
@@ -86,22 +107,26 @@ export default function DraggableList(props) {
                 {props.renderTitle ? props.renderTitle(item) : null}
               </View>
               <View style={{justifyContent: 'center'}}>
-                {item.children.map(child => {
+                {item.children.map((child, childIndex) => {
                   return (
                     <Item
                       key={child.id}
                       id={child.id}
-                      data={props.data}
+                      parentIndex={index}
+                      index={childIndex}
+                      data={sharedData}
+                      contentHeight={scrollViewContainerHeight}
+                      containerStartY={containerStartY}
                       onReorder={data => {
                         props.onReorder(data);
                       }}
+                      positionsWithOrder={positionsWithOrder}
                       positions={allChildrenPositions}
                       scrollY={scrollY}
                       containerWidth={containerWidth}
                       itemHeight={props.itemHeight}
                       titleHeight={props.titleHeight}
                       numOfColumns={numOfColumns}
-                      itemsContainerOffset={itemsContainerOffset}
                       child={true}
                       containerID={item.id}
                       scrollViewRef={scrollViewRef}>

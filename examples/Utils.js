@@ -16,20 +16,11 @@ export const getPosition = (
   containerWidth,
   itemHeight,
   numOfColumns,
-  containerStartYMapping,
-  containerID,
+  containerStartY,
 ) => {
   'worklet';
-  let offsetY = 0;
-  let keys = Object.keys(containerStartYMapping.value);
-  for (let key of keys) {
-    if (containerStartYMapping.value[key] == containerID) {
-      offsetY = parseInt(key);
-      break;
-    }
-  }
+  let offsetY = containerStartY.value;
   let y = Math.floor(position / numOfColumns) * itemHeight;
-  // console.log(y + offsetY);
   return {
     x: position % numOfColumns === 0 ? 0 : containerWidth,
     y: y,
@@ -43,25 +34,51 @@ export const getOrder = (
   containerWidth,
   itemHeight,
   numOfColumns,
-  containerStartYMapping,
-  containerID,
+  positionsWithOrder,
+  id,
+  type,
 ) => {
   'worklet';
   let targetContainerID = '';
-  let startY = parseInt(
-    Object.keys(containerStartYMapping).find(
-      key => containerStartYMapping[key] === containerID,
-    ),
-  );
-  let containerStartY = startY;
-  for (let key of Object.keys(containerStartYMapping)) {
-    let index = Object.keys(containerStartYMapping).indexOf(key);
-    if (startY + ty > parseFloat(key)) {
-      targetContainerID = containerStartYMapping[key];
-      containerStartY = parseInt(key);
+  let offsetY = 0;
+  let maxOffsetY = Number.MIN_SAFE_INTEGER;
+  let containerStartY = 0;
+  let currentContainer = '';
+  if (type === 'container') {
+    containerStartY = positionsWithOrder.value[id].offsetY;
+    currentContainer = id;
+  } else {
+    currentContainer = Object.keys(positionsWithOrder.value).find(key =>
+      Object.keys(positionsWithOrder.value[key].children).find(
+        child => child === id,
+      ),
+    );
+    containerStartY = positionsWithOrder.value[currentContainer].offsetY;
+  }
+  for (let key of Object.keys(positionsWithOrder.value)) {
+    let containerOffsetY = parseFloat(positionsWithOrder.value[key].offsetY);
+    if (
+      containerStartY + ty > containerOffsetY &&
+      containerOffsetY > maxOffsetY
+    ) {
+      maxOffsetY = containerOffsetY;
+      targetContainerID = key;
+      if (
+        positionsWithOrder.value[key].order <
+        positionsWithOrder.value[currentContainer].order
+      ) {
+        offsetY = positionsWithOrder.value[currentContainer].offsetY;
+      } else if (
+        positionsWithOrder.value[key].order >
+        positionsWithOrder.value[currentContainer].order
+      ) {
+        offsetY = -positionsWithOrder.value[key].offsetY;
+      } else {
+        offsetY = 0;
+      }
     }
   }
-
+  ty = type === 'child' ? ty + offsetY : ty;
   const x = Math.round(tx / containerWidth) * containerWidth;
   const y = Math.round(ty / itemHeight) * itemHeight;
   const row = Math.max(y, 0) / itemHeight;

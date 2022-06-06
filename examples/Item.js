@@ -23,89 +23,134 @@ import {
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-export default function Item(props) {
-  let {scrollY, positions, scrollViewRef, data} = props;
-  let dataCopy = [...data];
-  let fromItem = null;
-  // handling container position Y mapping
-  const handleContainerStartYMapping = () => {
-    let containerStartYMapping = {};
-    for (let index in Object.keys(positions.value)) {
-      if (index == 0) {
-        containerStartYMapping[props.container ? 0 : props.titleHeight] =
-          Object.keys(positions.value)[index];
-      } else {
-        const children =
-          positions.value[Object.keys(positions.value)[index - 1]];
-        const childrenHeight = Object.keys(children).length * props.itemHeight;
-        const lastHeight = parseInt(
-          Object.keys(containerStartYMapping)[index - 1],
-        );
-        containerStartYMapping[
-          lastHeight + childrenHeight + props.titleHeight
-        ] = Object.keys(positions.value)[index];
-      }
-    }
-    return containerStartYMapping;
-  };
-  const containerStartYMapping = useSharedValue(handleContainerStartYMapping());
 
+function handleGetContainerStartY(positionsWithOrder, id, type) {
+  if (type === 'container') {
+    return positionsWithOrder.value[id].offsetY;
+  } else if (type === 'child') {
+    const container = Object.keys(positionsWithOrder.value).find(key =>
+      Object.keys(positionsWithOrder.value[key].children).find(
+        child => child === id,
+      ),
+    );
+    return positionsWithOrder.value[container].offsetY;
+  }
+}
+export default function Item(props) {
+  let {scrollY, positionsWithOrder, scrollViewRef, data, contentHeight} = props;
+  let fromIndex = useSharedValue();
+  const containerStartY = useSharedValue(
+    handleGetContainerStartY(
+      positionsWithOrder,
+      props.id,
+      props.container ? 'container' : 'child',
+    ),
+  );
+  const currentOrder = props.container
+    ? props.positionsWithOrder.value[props.id].order
+    : props.positionsWithOrder.value[props.containerID].children[props.id]
+        .order;
   let position = getPosition(
-    props.positions.value[props.containerID][props.id],
+    currentOrder,
     props.containerWidth,
     props.itemHeight,
     props.numOfColumns,
-    containerStartYMapping,
-    props.containerID,
+    containerStartY,
   );
+
+  if (props.container) {
+    props.positionsWithOrder.value[props.id]['offsetY'] = position.y;
+  }
+
+  if (props.onLayout) {
+    props.onLayout({nativeEvent: {layout: position}});
+  }
 
   const translateX = useSharedValue(position.x);
   const translateY = useSharedValue(position.y);
   const inset = useSafeAreaInsets();
   const containerHeight =
     Dimensions.get('window').height - inset.top - inset.bottom;
-  const contentHeight = useSharedValue(
-    (Object.keys(props.positions.value[props.containerID]).length /
-      props.numOfColumns) *
-      props.itemHeight,
-  );
+  // const contentHeight = useSharedValue(
+  //   props.container
+  //     ? (Object.keys(props.positionsWithOrder.value).length /
+  //         props.numOfColumns) *
+  //         props.itemHeight
+  //     : (Object.keys(props.positionsWithOrder.value[props.containerID].children)
+  //         .length /
+  //         props.numOfColumns) *
+  //         props.itemHeight,
+  // );
   const isGestureActive = useSharedValue(false);
   const shouldMoveItem = useSharedValue(false);
 
   const longPressTimer = useSharedValue(null);
-
   useAnimatedReaction(
     () => {
       // console.log(props.containerID);
-      // console.log(props.positions.value[props.containerID]);
-      return props.positions.value[props.containerID][props.id];
+      if (props.container) {
+        return props.positionsWithOrder.value[props.id].order;
+      } else if (props.child) {
+        return props.positionsWithOrder.value[props.containerID].children[
+          props.id
+        ].order;
+      }
     },
     newOrder => {
-      containerStartYMapping.value = handleContainerStartYMapping();
+      fromIndex.value = newOrder;
       const newPosition = getPosition(
         newOrder,
         props.containerWidth,
         props.itemHeight,
         props.numOfColumns,
-        containerStartYMapping,
-        props.containerID,
+        containerStartY,
       );
+
       translateX.value = withTiming(newPosition.x, animationConfig);
       translateY.value = withTiming(newPosition.y, animationConfig);
-      contentHeight.value =
-        (Object.keys(props.positions.value[props.containerID]).length /
-          props.numOfColumns) *
-        props.itemHeight;
     },
   );
+  // useAnimatedReaction(
+  //   () => {
+  //     // console.log(props.containerID);
+  //     // console.log(props.positions.value[props.containerID]);
+  //     return props.positions.value[props.containerID][props.id];
+  //   },
+  //   newOrder => {
+  //     containerStartYMapping.value = handleContainerStartYMapping();
+  //     const newPosition = getPosition(
+  //       newOrder,
+  //       props.containerWidth,
+  //       props.itemHeight,
+  //       props.numOfColumns,
+  //       containerStartYMapping,
+  //       props.containerID,
+  //     );
+  //     translateX.value = withTiming(newPosition.x, animationConfig);
+  //     translateY.value = withTiming(newPosition.y, animationConfig);
+  //     contentHeight.value =
+  //       (Object.keys(props.positions.value[props.containerID]).length /
+  //         props.numOfColumns) *
+  //       props.itemHeight;
+  //   },
+  // );
   let onGestureEvent = useAnimatedGestureHandler({
     onStart: (_, ctx) => {
+      const containerStartY = handleGetContainerStartY(
+        positionsWithOrder,
+        props.id,
+        props.container ? 'container' : 'child',
+      );
       longPressTimer.value = setTimeout(() => {
         isGestureActive.value = true;
         shouldMoveItem.value = true;
       }, 500);
       ctx.x = translateX.value;
       ctx.y = translateY.value;
+      ctx.fromIndex = props.container
+        ? props.positionsWithOrder.value[props.id].order
+        : props.positionsWithOrder.value[props.containerID].children[props.id]
+            .order;
     },
     onActive: ({translationX, translationY}, ctx) => {
       if (shouldMoveItem.value) {
@@ -113,55 +158,78 @@ export default function Item(props) {
         translateY.value = ctx.y + translationY;
 
         // handle re-order items
-        let oldOrder = props.positions.value[props.containerID][props.id];
+        let oldOrder = props.container
+          ? props.positionsWithOrder.value[props.id].order
+          : props.positionsWithOrder.value[props.containerID].children[props.id]
+              .order;
         let newOrder = getOrder(
           translateX.value,
           translateY.value,
           props.containerWidth,
           props.itemHeight,
           props.numOfColumns,
-          containerStartYMapping.value,
-          props.containerID,
+          props.positionsWithOrder,
+          props.id,
+          props.container ? 'container' : 'child',
         );
+        ctx.newOrder = newOrder;
         if (
           oldOrder !== newOrder.order ||
           props.containerID !== newOrder.containerID
         ) {
-          const idToSwap =
-            props.positions.value[newOrder.containerID] &&
-            Object.keys(props.positions.value[newOrder.containerID]).find(
-              key =>
-                props.positions.value[newOrder.containerID][key] ===
-                newOrder.order,
-            );
-
-          const oldItemContainerIndex = Object.keys(
-            props.positions.value,
-          ).indexOf(props.containerID);
-          const swapItemContainerIndex = Object.keys(
-            props.positions.value,
-          ).indexOf(newOrder.containerID);
           // const itemToSwap =
           //   props.positions.value[newOrder.containerID][idToSwap];
-          let newPositions = {
-            ...props.positions.value,
-          };
 
-          if (props.containerID === newOrder.containerID && idToSwap) {
-            newPositions[props.containerID][props.id] = newOrder.order;
-            newPositions[newOrder.containerID][idToSwap] = oldOrder;
+          let swapIDs = {from: null, to: null};
+          let fromOrder = null;
+          if (props.container) {
+            fromOrder = props.positionsWithOrder.value[props.id].order;
+            let toID = Object.keys(props.positionsWithOrder.value).find(
+              key =>
+                props.positionsWithOrder.value[key].order === newOrder.order,
+            );
+            swapIDs = {from: props.id, to: toID};
+          } else if (props.child) {
+            fromOrder =
+              props.positionsWithOrder.value[props.containerID].children[
+                props.id
+              ].order;
+            let toID = Object.keys(
+              props.positionsWithOrder.value[props.containerID].children,
+            ).find(
+              key =>
+                props.positionsWithOrder.value[props.containerID].children[key]
+                  .order === newOrder.order,
+            );
+            swapIDs = {from: props.id, to: toID};
+          }
 
+          let positionsWithOrderCopy = {...props.positionsWithOrder.value};
+          if (
+            (props.containerID === newOrder.containerID || props.container) &&
+            swapIDs.from &&
+            swapIDs.to
+          ) {
+            // console.log(swapIDs);
             // handle swapping actual data
             if (props.child) {
-              let fromItemContainer = dataCopy[oldItemContainerIndex];
-              let oldItemCopy = fromItemContainer.children[oldOrder];
-              fromItemContainer.children.splice(oldOrder, 1);
-              fromItemContainer.children.splice(newOrder.order, 0, oldItemCopy);
+              positionsWithOrderCopy[props.containerID].children[
+                swapIDs.from
+              ].order = newOrder.order;
+              positionsWithOrderCopy[newOrder.containerID].children[
+                swapIDs.to
+              ].order = oldOrder;
+              // let fromItemContainer = dataCopy[oldItemContainerIndex];
+              // let oldItemCopy = fromItemContainer.children[oldOrder];
+              // fromItemContainer.children.splice(oldOrder, 1);
+              // fromItemContainer.children.splice(newOrder.order, 0, oldItemCopy);
             } else if (props.container) {
-              let tmp = [...dataCopy];
-              let oldItemCopy = dataCopy[oldOrder];
-              dataCopy.splice(oldOrder, 1);
-              dataCopy.splice(newOrder.order, 0, oldItemCopy);
+              positionsWithOrderCopy[swapIDs.from].order = newOrder.order;
+              positionsWithOrderCopy[swapIDs.to].order = oldOrder;
+              // let tmp = [...dataCopy];
+              // let oldItemCopy = dataCopy[oldOrder];
+              // dataCopy.splice(oldOrder, 1);
+              // dataCopy.splice(newOrder.order, 0, oldItemCopy);
             }
           } else {
             //TODO: handling drag and drop between containers
@@ -177,20 +245,22 @@ export default function Item(props) {
             // newPositions[newOrder.containerID][props.id] = oldOrder;
             // delete newPositions[props.containerID][props.id];
           }
-          props.positions.value = {...newPositions};
+          props.positionsWithOrder.value = {...positionsWithOrderCopy};
         }
 
         // handling scrolling the ScrollView
-        const lowerBound = scrollY.value;
-        const upperBound = lowerBound + containerHeight - props.itemHeight;
-        const maxScroll = contentHeight.value - containerHeight;
-        const leftToScrollDown = maxScroll - scrollY.value;
-        const currentContainerStartY = parseInt(
-          Object.keys(containerStartYMapping.value).find(key => {
-            return containerStartYMapping.value[key] === props.containerID;
-          }),
+        const containerStartY = handleGetContainerStartY(
+          positionsWithOrder,
+          props.id,
+          props.container ? 'container' : 'child',
         );
-        let actualTranslateY = translateY.value + currentContainerStartY;
+        const lowerBound = scrollY.value + 50;
+        const upperBound = lowerBound + containerHeight - props.itemHeight / 2;
+        const maxScroll = contentHeight - containerHeight;
+        const leftToScrollDown = maxScroll - scrollY.value;
+        let actualTranslateY = props.container
+          ? translateY.value
+          : translateY.value + containerStartY;
         if (actualTranslateY < lowerBound) {
           const diff = Math.min(lowerBound - actualTranslateY, lowerBound);
           scrollY.value -= diff;
@@ -202,10 +272,11 @@ export default function Item(props) {
           ctx.y -= diff;
           translateY.value = ctx.y + translationY;
         }
+
         if (actualTranslateY > upperBound) {
           const diff = Math.min(
             actualTranslateY - upperBound,
-            actualTranslateY - upperBound,
+            leftToScrollDown,
           );
           // console.log(actualTranslateY, upperBound, leftToScrollDown);
           scrollY.value += diff;
@@ -232,24 +303,53 @@ export default function Item(props) {
         // shouldMoveItem.value = true;
       }
     },
-    onEnd: () => {
-      shouldMoveItem.value = false;
+    onEnd: (_, ctx) => {
+      let newOrder = props.container
+        ? props.positionsWithOrder.value[props.id].order
+        : props.positionsWithOrder.value[props.containerID].children[props.id]
+            .order;
+      const containerStartY = handleGetContainerStartY(
+        positionsWithOrder,
+        props.id,
+        props.container ? 'container' : 'child',
+      );
       const destination = getPosition(
-        props.positions.value[props.containerID][props.id],
+        newOrder,
         props.containerWidth,
         props.itemHeight,
         props.numOfColumns,
-        containerStartYMapping,
-        props.containerID,
+        containerStartY,
       );
 
       translateX.value = withTiming(destination.x, animationConfig, () => {
         isGestureActive.value = false;
       });
       translateY.value = withTiming(destination.y, animationConfig);
-      if (props.onReorder) {
+
+      if (props.onReorder && shouldMoveItem.value) {
+        let dataCopy = [...props.data.value];
+        // handle reordering actual data
+        if (props.child) {
+          const parentContainer = dataCopy.find(item =>
+            item.children.find(child => child.id === props.id),
+          );
+          parentContainer.children.splice(
+            ctx.newOrder.order,
+            0,
+            parentContainer.children.splice(ctx.fromIndex, 1)[0],
+          );
+        } else if (props.container) {
+          dataCopy.splice(
+            ctx.newOrder.order,
+            0,
+            dataCopy.splice(ctx.fromIndex, 1)[0],
+          );
+        }
+        props.data.value = dataCopy;
         props.onReorder(dataCopy);
       }
+
+      shouldMoveItem.value = false;
     },
     onFail: () => {
       clearTimeout(longPressTimer.value);
@@ -266,7 +366,7 @@ export default function Item(props) {
       top: 0,
       left: 0,
       width: props.containerWidth,
-      height: contentHeight.value,
+      height: props.itemHeight,
       zIndex,
       transform: [
         {translateX: translateX.value},

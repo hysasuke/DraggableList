@@ -1,7 +1,8 @@
 import React, {useEffect} from 'react';
-import {Text, View} from 'react-native';
+import {Text, View, TouchableOpacity, Dimensions} from 'react-native';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import DraggableList from './DraggableList';
+const window = Dimensions.get('window');
 function App() {
   const [data, setData] = React.useState([]);
   useEffect(() => {
@@ -31,16 +32,15 @@ function App() {
 
     setData(data);
   }, []);
-
   return (
     <SafeAreaProvider>
       <SafeAreaView>
         <DraggableList
           itemHeight={60}
           titleHeight={50}
+          containerWidth={window.width - 20}
           data={data}
           onReorder={data => {
-            // console.log(data);
             setData([...data]);
           }}
           renderTitle={title => {
@@ -52,15 +52,18 @@ function App() {
           }}
           renderItem={item => {
             return (
-              <View
+              <TouchableOpacity
+                onPress={() => {
+                  alert(item.title);
+                }}
                 style={{
                   padding: 10,
                   margin: 10,
-
+                  borderRadius: 10,
                   backgroundColor: item.backgroundColor,
                 }}>
                 <Text style={{color: 'white'}}>{item.title}</Text>
-              </View>
+              </TouchableOpacity>
             );
           }}
         />
