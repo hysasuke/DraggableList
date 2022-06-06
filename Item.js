@@ -1,13 +1,13 @@
-import {View, Text, StyleSheet, Dimensions} from 'react-native';
-import React from 'react';
+import { View, Text, StyleSheet, Dimensions } from "react-native";
+import React from "react";
 import {
   getPosition,
   SIZE,
   animationConfig,
   getOrder,
   COL,
-  HEIGHT,
-} from './Utils';
+  HEIGHT
+} from "./Utils";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -15,36 +15,37 @@ import Animated, {
   withTiming,
   useAnimatedReaction,
   useAnimatedRef,
-  scrollTo,
-} from 'react-native-reanimated';
+  scrollTo
+} from "react-native-reanimated";
 import {
   PanGestureHandler,
   LongPressGestureHandler,
-  GestureHandlerRootView,
-} from 'react-native-gesture-handler';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+  GestureHandlerRootView
+} from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function handleGetContainerStartY(positionsWithOrder, id, type) {
-  if (type === 'container') {
+  if (type === "container") {
     return positionsWithOrder.value[id].offsetY;
-  } else if (type === 'child') {
-    const container = Object.keys(positionsWithOrder.value).find(key =>
+  } else if (type === "child") {
+    const container = Object.keys(positionsWithOrder.value).find((key) =>
       Object.keys(positionsWithOrder.value[key].children).find(
-        child => child === id,
-      ),
+        (child) => child === id
+      )
     );
     return positionsWithOrder.value[container].offsetY;
   }
 }
 export default function Item(props) {
-  let {scrollY, positionsWithOrder, scrollViewRef, data, contentHeight} = props;
+  let { scrollY, positionsWithOrder, scrollViewRef, data, contentHeight } =
+    props;
   let fromIndex = useSharedValue();
   const containerStartY = useSharedValue(
     handleGetContainerStartY(
       positionsWithOrder,
       props.id,
-      props.container ? 'container' : 'child',
-    ),
+      props.container ? "container" : "child"
+    )
   );
   const currentOrder = props.container
     ? props.positionsWithOrder.value[props.id].order
@@ -56,22 +57,22 @@ export default function Item(props) {
     props.itemHeight,
     props.numOfColumns,
     positionsWithOrder,
-    props.container ? 'container' : 'child',
+    props.container ? "container" : "child"
   );
 
   if (props.container) {
-    props.positionsWithOrder.value[props.id]['offsetY'] = position.y;
+    props.positionsWithOrder.value[props.id]["offsetY"] = position.y;
   }
 
   if (props.onLayout) {
-    props.onLayout({nativeEvent: {layout: position}});
+    props.onLayout({ nativeEvent: { layout: position } });
   }
 
   const translateX = useSharedValue(position.x);
   const translateY = useSharedValue(position.y);
   const inset = useSafeAreaInsets();
   const containerHeight =
-    Dimensions.get('window').height - inset.top - inset.bottom;
+    Dimensions.get("window").height - inset.top - inset.bottom;
   // const contentHeight = useSharedValue(
   //   props.container
   //     ? (Object.keys(props.positionsWithOrder.value).length /
@@ -97,7 +98,7 @@ export default function Item(props) {
         ].order;
       }
     },
-    newOrder => {
+    (newOrder) => {
       fromIndex.value = newOrder;
       const newPosition = getPosition(
         newOrder,
@@ -105,12 +106,12 @@ export default function Item(props) {
         props.itemHeight,
         props.numOfColumns,
         positionsWithOrder,
-        props.container ? 'container' : 'child',
+        props.container ? "container" : "child"
       );
 
       translateX.value = withTiming(newPosition.x, animationConfig);
       translateY.value = withTiming(newPosition.y, animationConfig);
-    },
+    }
   );
   // useAnimatedReaction(
   //   () => {
@@ -141,16 +142,16 @@ export default function Item(props) {
       const containerStartY = handleGetContainerStartY(
         positionsWithOrder,
         props.id,
-        props.container ? 'container' : 'child',
+        props.container ? "container" : "child"
       );
       props.currentDragging.value =
-        props.container && props.currentDragging.value === ''
-          ? 'container'
-          : 'child';
+        props.container && props.currentDragging.value === ""
+          ? "container"
+          : "child";
       longPressTimer.value = setTimeout(() => {
         isGestureActive.value = true;
         shouldMoveItem.value = true;
-      }, 500);
+      }, props.longPressDelay);
       ctx.x = translateX.value;
       ctx.y = translateY.value;
       ctx.fromIndex = props.container
@@ -158,7 +159,7 @@ export default function Item(props) {
         : props.positionsWithOrder.value[props.containerID].children[props.id]
             .order;
     },
-    onActive: ({translationX, translationY}, ctx) => {
+    onActive: ({ translationX, translationY }, ctx) => {
       if (shouldMoveItem.value) {
         translateX.value = ctx.x + translationX;
         translateY.value = ctx.y + translationY;
@@ -176,7 +177,7 @@ export default function Item(props) {
           props.numOfColumns,
           props.positionsWithOrder,
           props.id,
-          props.container ? 'container' : 'child',
+          props.container ? "container" : "child"
         );
         ctx.newOrder = newOrder;
         if (
@@ -186,31 +187,31 @@ export default function Item(props) {
           // const itemToSwap =
           //   props.positions.value[newOrder.containerID][idToSwap];
 
-          let swapIDs = {from: null, to: null};
+          let swapIDs = { from: null, to: null };
           let fromOrder = null;
           if (props.container) {
             fromOrder = props.positionsWithOrder.value[props.id].order;
             let toID = Object.keys(props.positionsWithOrder.value).find(
-              key =>
-                props.positionsWithOrder.value[key].order === newOrder.order,
+              (key) =>
+                props.positionsWithOrder.value[key].order === newOrder.order
             );
-            swapIDs = {from: props.id, to: toID};
+            swapIDs = { from: props.id, to: toID };
           } else if (props.child) {
             fromOrder =
               props.positionsWithOrder.value[props.containerID].children[
                 props.id
               ].order;
             let toID = Object.keys(
-              props.positionsWithOrder.value[props.containerID].children,
+              props.positionsWithOrder.value[props.containerID].children
             ).find(
-              key =>
+              (key) =>
                 props.positionsWithOrder.value[props.containerID].children[key]
-                  .order === newOrder.order,
+                  .order === newOrder.order
             );
-            swapIDs = {from: props.id, to: toID};
+            swapIDs = { from: props.id, to: toID };
           }
 
-          let positionsWithOrderCopy = {...props.positionsWithOrder.value};
+          let positionsWithOrderCopy = { ...props.positionsWithOrder.value };
           if (
             (props.containerID === newOrder.containerID || props.container) &&
             swapIDs.from &&
@@ -251,14 +252,14 @@ export default function Item(props) {
             // newPositions[newOrder.containerID][props.id] = oldOrder;
             // delete newPositions[props.containerID][props.id];
           }
-          props.positionsWithOrder.value = {...positionsWithOrderCopy};
+          props.positionsWithOrder.value = { ...positionsWithOrderCopy };
         }
 
         // handling scrolling the ScrollView
         const containerStartY = handleGetContainerStartY(
           positionsWithOrder,
           props.id,
-          props.container ? 'container' : 'child',
+          props.container ? "container" : "child"
         );
         const lowerBound = scrollY.value;
         const upperBound = lowerBound + containerHeight - props.itemHeight;
@@ -274,7 +275,7 @@ export default function Item(props) {
 
           scrollViewRef?.current.scrollTo({
             y: scrollY.value,
-            animated: false,
+            animated: false
           });
           ctx.y -= diff;
           translateY.value = ctx.y + translationY;
@@ -283,13 +284,13 @@ export default function Item(props) {
         if (actualTranslateY > upperBound) {
           const diff = Math.min(
             actualTranslateY - upperBound,
-            leftToScrollDown,
+            leftToScrollDown
           );
           // console.log(actualTranslateY, upperBound, leftToScrollDown);
           scrollY.value += diff;
           scrollViewRef?.current.scrollTo({
             y: scrollY.value,
-            animated: false,
+            animated: false
           });
           ctx.y += diff;
           translateY.value = ctx.y + translationY;
@@ -318,7 +319,7 @@ export default function Item(props) {
       const containerStartY = handleGetContainerStartY(
         positionsWithOrder,
         props.id,
-        props.container ? 'container' : 'child',
+        props.container ? "container" : "child"
       );
       const destination = getPosition(
         newOrder,
@@ -326,7 +327,7 @@ export default function Item(props) {
         props.itemHeight,
         props.numOfColumns,
         positionsWithOrder,
-        props.container ? 'container' : 'child',
+        props.container ? "container" : "child"
       );
 
       translateX.value = withTiming(destination.x, animationConfig, () => {
@@ -338,19 +339,19 @@ export default function Item(props) {
         let dataCopy = [...props.data.value];
         // handle reordering actual data
         if (props.child) {
-          const parentContainer = dataCopy.find(item =>
-            item.children.find(child => child.id === props.id),
+          const parentContainer = dataCopy.find((item) =>
+            item.children.find((child) => child.id === props.id)
           );
           parentContainer.children.splice(
             ctx.newOrder.order,
             0,
-            parentContainer.children.splice(ctx.fromIndex, 1)[0],
+            parentContainer.children.splice(ctx.fromIndex, 1)[0]
           );
         } else if (props.container) {
           dataCopy.splice(
             ctx.newOrder.order,
             0,
-            dataCopy.splice(ctx.fromIndex, 1)[0],
+            dataCopy.splice(ctx.fromIndex, 1)[0]
           );
         }
         props.data.value = dataCopy;
@@ -358,33 +359,33 @@ export default function Item(props) {
       }
 
       shouldMoveItem.value = false;
-      props.currentDragging.value = '';
+      props.currentDragging.value = "";
     },
     onFail: () => {
       clearTimeout(longPressTimer.value);
       longPressTimer.value = null;
       isGestureActive.value = false;
-      props.currentDragging.value = '';
-    },
+      props.currentDragging.value = "";
+    }
   });
 
   const style = useAnimatedStyle(() => {
-    const type = props.container ? 'container' : 'child';
+    const type = props.container ? "container" : "child";
     const zIndex = isGestureActive.value ? 99999 : 0;
     const scale =
       props.currentDragging.value === type && isGestureActive.value ? 1.1 : 1;
     return {
-      position: 'absolute',
+      position: "absolute",
       top: 0,
       left: 0,
       width: props.containerWidth,
       height: props.itemHeight,
       zIndex,
       transform: [
-        {translateX: translateX.value},
-        {translateY: translateY.value},
-        {scale},
-      ],
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+        { scale }
+      ]
     };
   });
 
@@ -392,9 +393,10 @@ export default function Item(props) {
     <Animated.View style={style}>
       <PanGestureHandler
         onGestureEvent={onGestureEvent}
-        onHandlerStateChange={event => {
-          console.log('change');
-        }}>
+        onHandlerStateChange={(event) => {
+          console.log("change");
+        }}
+      >
         <Animated.View style={[StyleSheet.absoluteFill]}>
           {props.children}
         </Animated.View>

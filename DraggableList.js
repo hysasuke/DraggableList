@@ -1,22 +1,22 @@
-import {View, Text, ScrollView, Dimensions} from 'react-native';
-import React from 'react';
-import {MARGIN, SIZE, COL, HEIGHT} from './Utils';
-import Item from './Item';
+import { View, Text, ScrollView, Dimensions } from "react-native";
+import React from "react";
+import { MARGIN, SIZE, COL, HEIGHT } from "./Utils";
+import Item from "./Item";
 import Animated, {
   useSharedValue,
   useAnimatedRef,
   useAnimatedScrollHandler,
-  scrollTo,
-} from 'react-native-reanimated';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
+  scrollTo
+} from "react-native-reanimated";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-const window = Dimensions.get('window');
+const window = Dimensions.get("window");
 export default function DraggableList(props) {
   const scrollViewRef = React.useRef();
   const scrollY = useSharedValue(0);
   const containerStartY = useSharedValue(0);
-  const currentDragging = useSharedValue('');
-  const onScroll = event => {
+  const currentDragging = useSharedValue("");
+  const onScroll = (event) => {
     scrollY.value = event.nativeEvent.contentOffset.y;
   };
   const numOfColumns = props.numOfColumns ? props.numOfColumns : 1;
@@ -27,8 +27,8 @@ export default function DraggableList(props) {
   const positions = useSharedValue({
     mainContainer: Object.assign(
       {},
-      ...props.data?.map((item, index) => ({[item.id]: index})),
-    ),
+      ...props.data?.map((item, index) => ({ [item.id]: index }))
+    )
   });
 
   let scrollViewContainerHeight = 0;
@@ -42,7 +42,7 @@ export default function DraggableList(props) {
         order: index,
         children: {},
         containerHeight:
-          props.titleHeight + props.itemHeight * item.children.length,
+          props.titleHeight + props.itemHeight * item.children.length
       };
       scrollViewContainerHeight += props.titleHeight;
 
@@ -50,7 +50,7 @@ export default function DraggableList(props) {
         let childIndex = item.children.indexOf(child);
         scrollViewContainerHeight += props.itemHeight;
         output[item.id].children[child.id] = {
-          order: childIndex,
+          order: childIndex
         };
         order++;
       }
@@ -68,16 +68,17 @@ export default function DraggableList(props) {
       contentContainerStyle={{
         // height: Math.ceil(props.data.length / numOfColumns) * itemHeight,
         height: scrollViewContainerHeight,
-        alignItems: 'center',
+        alignItems: "center"
       }}
       showsVerticalScrollIndicator={false}
       bounces={false}
-      scrollEventThrottle={16}>
-      <View style={{alignItems: 'center', width: containerWidth}}>
+      scrollEventThrottle={16}
+    >
+      <View style={{ alignItems: "center", width: containerWidth }}>
         {sharedData.value?.map((item, index) => {
           return (
             <Item
-              onLayout={({nativeEvent}) => {
+              onLayout={({ nativeEvent }) => {
                 containerStartY.value = nativeEvent.layout.y;
                 positionsWithOrder.value[item.id].offsetY =
                   nativeEvent.layout.y;
@@ -92,22 +93,25 @@ export default function DraggableList(props) {
               containerStartY={containerStartY}
               containerWidth={containerWidth}
               contentHeight={scrollViewContainerHeight}
+              longPressDelay={props.longPressDelay ? props.longPressDelay : 500}
               itemHeight={
                 item.children.length * props.itemHeight + props.titleHeight
               }
               titleHeight={props.titleHeight}
               numOfColumns={numOfColumns}
               container={true}
-              onReorder={data => {
+              onReorder={(data) => {
                 props.onReorder(data);
               }}
-              containerID={'mainContainer'}
-              scrollViewRef={scrollViewRef}>
+              containerID={"mainContainer"}
+              scrollViewRef={scrollViewRef}
+            >
               <View
-                style={{height: props.titleHeight, justifyContent: 'center'}}>
+                style={{ height: props.titleHeight, justifyContent: "center" }}
+              >
                 {props.renderTitle ? props.renderTitle(item) : null}
               </View>
-              <View style={{justifyContent: 'center'}}>
+              <View style={{ justifyContent: "center" }}>
                 {item.children.length === 0
                   ? props.renderEmptyItem
                     ? props.renderEmptyItem()
@@ -123,9 +127,12 @@ export default function DraggableList(props) {
                           data={sharedData}
                           contentHeight={scrollViewContainerHeight}
                           containerStartY={containerStartY}
-                          onReorder={data => {
+                          onReorder={(data) => {
                             props.onReorder(data);
                           }}
+                          longPressDelay={
+                            props.longPressDelay ? props.longPressDelay : 500
+                          }
                           positionsWithOrder={positionsWithOrder}
                           scrollY={scrollY}
                           containerWidth={containerWidth}
@@ -134,7 +141,8 @@ export default function DraggableList(props) {
                           numOfColumns={numOfColumns}
                           child={true}
                           containerID={item.id}
-                          scrollViewRef={scrollViewRef}>
+                          scrollViewRef={scrollViewRef}
+                        >
                           {props.renderItem ? props.renderItem(child) : null}
                         </Item>
                       );
