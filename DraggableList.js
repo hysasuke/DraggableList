@@ -37,13 +37,16 @@ export default function DraggableList(props) {
   let handlePositionsWithOrder = (data) => {
     let output = {};
     for (let item of data) {
+      let childrenLength = item.children.length;
+      if (item.children.length === 0 && props.renderEmptyItem) {
+        childrenLength = 1;
+      }
       let index = data.indexOf(item);
       let order = 0;
       output[item.id] = {
         order: index,
         children: {},
-        containerHeight:
-          props.titleHeight + props.itemHeight * item.children.length
+        containerHeight: props.titleHeight + props.itemHeight * childrenLength
       };
       scrollViewContainerHeight += props.titleHeight;
       for (let child of item.children) {
