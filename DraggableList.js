@@ -64,9 +64,8 @@ export default function DraggableList(props) {
 
   React.useEffect(() => {
     setRenderData(props.data);
-    sharedData.value = props.data;
-
     positionsWithOrder.value = handlePositionsWithOrder(props.data);
+    sharedData.value = props.data;
   }, [props.data]);
 
   return (
@@ -94,7 +93,7 @@ export default function DraggableList(props) {
               key={item.id}
               id={item.id}
               index={index}
-              data={renderData}
+              data={sharedData}
               positionsWithOrder={positionsWithOrder}
               scrollY={scrollY}
               currentDragging={currentDragging}
@@ -132,7 +131,7 @@ export default function DraggableList(props) {
                           parentIndex={index}
                           index={childIndex}
                           currentDragging={currentDragging}
-                          data={renderData}
+                          data={sharedData}
                           contentHeight={scrollViewContainerHeight}
                           containerStartY={containerStartY}
                           onReorder={(data) => {

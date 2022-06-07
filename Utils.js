@@ -11,6 +11,13 @@ export const animationConfig = {
   duration: 350
 };
 
+export const getCurrentContainerID = (id, type, positionsWithOrder) => {
+  if(type === "child") {
+    return Object.keys(positionsWithOrder.value).find(key => positionsWithOrder.value[key].children[id])
+  }
+  return ""
+}
+
 export const getPosition = (
   position,
   containerWidth,

@@ -7,7 +7,8 @@ import {
   getOrder,
   COL,
   HEIGHT,
-  getCurrentContainer
+  getCurrentContainer,
+  getCurrentContainerID
 } from "./Utils";
 import Animated, {
   useSharedValue,
@@ -41,7 +42,7 @@ export default function Item(props) {
   let { scrollY, positionsWithOrder, scrollViewRef, data, contentHeight } =
     props;
   let fromIndex = useSharedValue();
-  const currentContainerID = useSharedValue(props.containerID);
+  const currentContainerID = useSharedValue(getCurrentContainerID(props.id, props.child ? "child": "container", positionsWithOrder));
   React.useEffect(() => {
     currentContainerID.value = props.containerID;
   }, [props.containerID]);
@@ -339,7 +340,7 @@ export default function Item(props) {
       translateY.value = withTiming(destination.y, animationConfig);
 
       if (props.onReorder && shouldMoveItem.value) {
-        let dataCopy = [...props.data];
+        let dataCopy = [...props.data.value];
         // handle reordering actual data
         if (props.child) {
           const parentContainer = dataCopy.find((item) =>
